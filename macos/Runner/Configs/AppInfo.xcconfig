@@ -8,7 +8,7 @@
 PRODUCT_NAME = automatisation_test
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.automatisationTest
+PRODUCT_BUNDLE_IDENTIFIER = com.alerwann.automatisationTest
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.alerwann. All rights reserved.
