@@ -32,21 +32,41 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool _isLoading = false;
-  List<AppInfo> _allAvailableApps = [];
 
-  Future<void> _loadInstalledApps() async {
+  List<AppInfo> _allAvailableApps = [];
+  List<AppInfo> _selectedTestApps = [];
+
+  final _platformService = PlatformService();
+@override
+  void initState() {
+    super.initState();
+    _initialLoad(); // Lancement de la séquence de chargement
+  }
+
+  // Fonction de chargement qui gère à la fois les apps installées et les apps sauvegardées
+  Future<void> _initialLoad() async {
     setState(() {
       _isLoading = true;
     });
 
-    // 💡 Appel du service au lieu du code natif direct
-    final List<AppInfo> appList = await PlatformService().loadInstalledApps();
+    // 1. Charger les packageIds enregistrés (Ex: ['com.whatsapp', 'com.facebook'])
+    final List<String> savedIds = await _platformService.loadSavedPackageIds();
+
+    // 2. Charger toutes les applications installées (appel natif)
+    final List<AppInfo> allApps = await _platformService.loadInstalledApps();
+
+    // 3. Reconstruire la liste sélectionnée
+    final List<AppInfo> restoredApps = allApps
+        .where((app) => savedIds.contains(app.packageId))
+        .toList();
 
     setState(() {
-      _allAvailableApps = appList;
+      _allAvailableApps = allApps;
+      _selectedTestApps = restoredApps;
       _isLoading = false;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text("hello"),
             // --- BOUTON DE TEST ---
             ElevatedButton(
-              onPressed: _loadInstalledApps,
+              onPressed: loadInstalledApps,
               child: Text("Tester le Canal"),
             ),
           ],
