@@ -88,6 +88,7 @@ class MainActivity: FlutterActivity() {
     }
 
 
+   // MainActivity.kt (Remplacement de la fonction onActivityResult entière)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         
@@ -95,19 +96,6 @@ class MainActivity: FlutterActivity() {
             if (resultCode == Activity.RESULT_OK && data != null) {
                 // Succès : L'utilisateur a autorisé la capture.
                 
-                // TODO: Étape 10.3 - Lancer le Foreground Service ici
-                pendingResult?.success("Séquence Démarrée. Autorisation OK.")
-                
-            } else {
-                // Échec : L'utilisateur a refusé ou l'Intent a échoué.
-                pendingResult?.error("PERMISSION_DENIED", "L'utilisateur a refusé la capture d'écran.", null)
-            }
-            pendingResult = null // Réinitialiser le résultat
-        }
-        if (requestCode == REQUEST_MEDIA_PROJECTION) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                
-                // 🚨 REMPLACEMENT du PENDING_RESULT : Démarrer le Service
                 val serviceIntent = Intent(this, TestSequenceService::class.java).apply {
                     // 1. Passer la liste des packages
                     putStringArrayListExtra("PACKAGES_LIST", ArrayList(packagesToTest))
@@ -125,9 +113,10 @@ class MainActivity: FlutterActivity() {
                 pendingResult?.success("Séquence de test démarrée.")
                 
             } else {
-                // ... (Logique d'erreur existante)
+                // Échec : L'utilisateur a refusé ou l'Intent a échoué.
+                pendingResult?.error("PERMISSION_DENIED", "L'utilisateur a refusé la capture d'écran.", null)
             }
-            pendingResult = null
+            pendingResult = null // Réinitialiser le résultat, UNIQUEMENT à la fin
         }
     }
 }
