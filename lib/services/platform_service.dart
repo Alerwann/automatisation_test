@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PlatformService {
-  static const MethodChannel _platform = const MethodChannel(
+  static const MethodChannel _platform = MethodChannel(
     'com.alerwann/screen_automation',
   );
 static const String _appKey = 'selectedAppPackages';

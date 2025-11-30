@@ -3,15 +3,26 @@ package com.alerwann.automatisation_test
 import android.content.pm.PackageManager
 
 import io.flutter.embedding.android.FlutterActivity
-
 import androidx.annotation.NonNull
 
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
+import android.app.Activity
+import android.content.Intent
+import android.media.projection.MediaProjectionManager 
+import android.content.Context
+
 class MainActivity: FlutterActivity() {
 
     private val CHANNEL = "com.alerwann/screen_automation" 
+
+    companion object {
+        private const val REQUEST_MEDIA_PROJECTION = 1001 
+    }
+
+    private var pendingResult: MethodChannel.Result? = null
+    private var packagesToTest: List<String> = emptyList()
 
     private fun getInstalledApps(): List<Map<String, String>> {
         val packageManager = applicationContext.packageManager
@@ -44,22 +55,79 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
+       MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
             call, result ->
             
             when (call.method) {
-                "startScreenCapture" -> {
-            
-                    result.success(true) // On renvoie une réponse rapide pour l'instant
+                "startTestSequence" -> {
+                    // 1. Stocker le résultat Flutter et les paquets
+                    pendingResult = result 
+                    packagesToTest = call.argument<List<String>>("packages") ?: emptyList()
+                    
+                    // 2. Déclencher la demande de permission MediaProjection
+                    requestMediaProjectionPermission() 
                 }
                 "getAppList" -> {
-                    // TODO: Étape 5 - Logique pour récupérer la liste des applications installées
                     result.success(getInstalledApps())
                 }
                 else -> {
                     result.notImplemented()
                 }
             }
+        }
+    }
+    private fun requestMediaProjectionPermission() {
+        val mediaProjectionManager = 
+            applicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        
+        // Lance l'Intent système pour obtenir la permission de l'utilisateur
+        startActivityForResult(
+            mediaProjectionManager.createScreenCaptureIntent(),
+            REQUEST_MEDIA_PROJECTION 
+        )
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                // Succès : L'utilisateur a autorisé la capture.
+                
+                // TODO: Étape 10.3 - Lancer le Foreground Service ici
+                pendingResult?.success("Séquence Démarrée. Autorisation OK.")
+                
+            } else {
+                // Échec : L'utilisateur a refusé ou l'Intent a échoué.
+                pendingResult?.error("PERMISSION_DENIED", "L'utilisateur a refusé la capture d'écran.", null)
+            }
+            pendingResult = null // Réinitialiser le résultat
+        }
+        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                
+                // 🚨 REMPLACEMENT du PENDING_RESULT : Démarrer le Service
+                val serviceIntent = Intent(this, TestSequenceService::class.java).apply {
+                    // 1. Passer la liste des packages
+                    putStringArrayListExtra("PACKAGES_LIST", ArrayList(packagesToTest))
+                    // 2. Passer l'Intent de permission MediaProjection (crucial)
+                    putExtra("PROJECTION_INTENT", data) 
+                }
+                
+                // Démarrer le service
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+                
+                pendingResult?.success("Séquence de test démarrée.")
+                
+            } else {
+                // ... (Logique d'erreur existante)
+            }
+            pendingResult = null
         }
     }
 }

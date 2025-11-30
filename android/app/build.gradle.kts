@@ -37,6 +37,12 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+   dependencies {
+   
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0") 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("androidx.core:core-ktx:1.13.1")
+}
 }
 
 flutter {
